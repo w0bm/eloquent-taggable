@@ -165,10 +165,20 @@ trait Taggable
     public function scopeWithAllTags(Builder $query, $tags)
     {
         $normalized = app(TagService::class)->buildTagArrayNormalized($tags);
+        $className = $query->getModel()->getMorphClass();
 
-        return $query->has('tags', '=', count($normalized), 'and', function (Builder $q) use ($normalized) {
-            $q->whereIn('normalized', $normalized);
-        });
+        foreach($normalized as $tag) {
+            $tags = collect(\DB::table('taggable_taggables')
+                ->join('taggable_tags', 'taggable_taggables.tag_id', '=', 'taggable_tags.tag_id')
+                ->where('taggable_type', $className)
+                ->where('taggable_tags.normalized', $tag)->select('taggable_id')->get())->pluck('taggable_id')->all();
+
+            $primaryKey = $this->getKeyName();
+            $query->whereIn($this->getTable() . '.' . $primaryKey, $tags);
+        }
+
+        return $query;
+
     }
 
     /**
@@ -187,9 +197,15 @@ trait Taggable
             return $query->has('tags');
         }
 
-        return $query->has('tags', '>', 0, 'and', function (Builder $q) use ($normalized) {
-            $q->whereIn('normalized', $normalized);
-        });
+        $className = $query->getModel()->getMorphClass();
+
+        $tags = collect(\DB::table('taggable_taggables')
+            ->join('taggable_tags', 'taggable_taggables.tag_id', '=', 'taggable_tags.tag_id')
+            ->where('taggable_type', $className)
+            ->whereIn('taggable_tags.normalized', $normalized)->select('taggable_id')->get())->pluck('taggable_id')->all();
+
+        $primaryKey = $this->getKeyName();
+        $query->whereIn($this->getTable() . '.' . $primaryKey, $tags);
     }
 
     /**
