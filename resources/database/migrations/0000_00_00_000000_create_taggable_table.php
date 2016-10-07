@@ -17,7 +17,7 @@ class CreateTaggableTable extends Migration
         Schema::create('taggable_tags', function (Blueprint $table) {
             $table->increments('tag_id');
             $table->string('name');
-            $table->string('normalized');
+            $table->string('normalized')->index();
             $table->timestamps();
         });
 
@@ -26,6 +26,7 @@ class CreateTaggableTable extends Migration
             $table->unsignedInteger('taggable_id');
             $table->string('taggable_type');
             $table->timestamps();
+            $table->primary(['tag_id', 'taggable_id', 'taggable_type']);
         });
     }
 
