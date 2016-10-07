@@ -168,13 +168,14 @@ trait Taggable
         $className = $query->getModel()->getMorphClass();
 
         foreach($normalized as $tag) {
-            $tags = collect(\DB::table('taggable_taggables')
-                ->join('taggable_tags', 'taggable_taggables.tag_id', '=', 'taggable_tags.tag_id')
-                ->where('taggable_type', $className)
-                ->where('taggable_tags.normalized', $tag)->select('taggable_id')->get())->pluck('taggable_id')->all();
-
             $primaryKey = $this->getKeyName();
-            $query->whereIn($this->getTable() . '.' . $primaryKey, $tags);
+            $query->whereIn($this->getTable() . '.' . $primaryKey, function($query) use($className, $tag) {
+                $query->select('taggable_id')
+                    ->from('taggable_taggables')
+                    ->join('taggable_tags', 'taggable_taggables.tag_id', '=', 'taggable_tags.tag_id')
+                    ->where('taggable_type', $className)
+                    ->where('taggable_tags.normalized', $tag);
+            });
         }
 
         return $query;
@@ -199,13 +200,42 @@ trait Taggable
 
         $className = $query->getModel()->getMorphClass();
 
-        $tags = collect(\DB::table('taggable_taggables')
-            ->join('taggable_tags', 'taggable_taggables.tag_id', '=', 'taggable_tags.tag_id')
-            ->where('taggable_type', $className)
-            ->whereIn('taggable_tags.normalized', $normalized)->select('taggable_id')->get())->pluck('taggable_id')->all();
-
         $primaryKey = $this->getKeyName();
-        $query->whereIn($this->getTable() . '.' . $primaryKey, $tags);
+        $query->whereIn($this->getTable() . '.' . $primaryKey, function($query) use ($className, $normalized) {
+            $query->select('taggable_id')
+                ->from('taggable_taggables')
+                ->join('taggable_tags', 'taggable_taggables.tag_id', '=', 'taggable_tags.tag_id')
+                ->where('taggable_type', $className)
+                ->whereIn('taggable_tags.normalized', $normalized);
+        });
+
+        return $query;
+    }
+
+    /**
+     * Scope for a Model that doesn't have any of the given Tags
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param array $tags
+     *
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeWithoutAnyTags(Builder $query, $tags = []) {
+        $normalized = app(TagService::class)->buildTagArrayNormalized($tags);
+        $className = $query->getModel()->getMorphClass();
+
+        foreach($normalized as $tag) {
+            $primaryKey = $this->getKeyName();
+            $query->whereNotIn($this->getTable() . '.' . $primaryKey, function($query) use($className, $tag) {
+                $query->select('taggable_id')
+                    ->from('taggable_taggables')
+                    ->join('taggable_tags', 'taggable_taggables.tag_id', '=', 'taggable_tags.tag_id')
+                    ->where('taggable_type', $className)
+                    ->where('taggable_tags.normalized', $tag);
+            });
+        }
+
+        return $query;
     }
 
     /**

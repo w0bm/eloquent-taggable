@@ -84,6 +84,36 @@ class ScopeTests extends TestCase
         );
     }
 
+    public function testWithoutAnyTags() {
+        /** @var Collection $models */
+        $models = TestModel::withoutAnyTags('Apple,Banana')->get();
+        //dd($models);
+        $keys = $models->modelKeys();
+
+
+        $this->assertArrayValuesAreEqual(
+            [
+                $this->testModel->getKey(), // parent
+                $this->testModelC->getKey()
+            ],
+            $keys
+        );
+
+        // Testing empty
+        $models = TestModel::withoutAnyTags()->get();
+        $keys = $models->modelKeys();
+
+        $this->assertArrayValuesAreEqual(
+            [
+                $this->testModel->getKey(),
+                $this->testModelABC->getKey(),
+                $this->testModelAB->getKey(),
+                $this->testModelC->getKey(),
+            ],
+            $keys
+        );
+    }
+
     public function testWithoutTags()
     {
         /** @var Collection $models */
