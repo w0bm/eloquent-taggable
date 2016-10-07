@@ -94,7 +94,7 @@ trait Taggable
         $tag = app(TagService::class)->findOrCreate($tagName);
 
         if (!$this->tags->contains($tag->getKey())) {
-            $this->tags()->attach($tag->getKey());
+            $this->tags()->sync([$tag->getKey()], false);
         }
     }
 
