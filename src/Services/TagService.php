@@ -1,17 +1,15 @@
-<?php namespace Cviebrock\EloquentTaggable\Services;
+<?php
+
+namespace Cviebrock\EloquentTaggable\Services;
 
 use Cviebrock\EloquentTaggable\Models\Tag;
 use Illuminate\Database\Eloquent\Model;
 
-
 /**
- * Class TagService
- *
- * @package Cviebrock\EloquentTaggable\Services
+ * Class TagService.
  */
 class TagService
 {
-
     /**
      * Find an existing tag by name.
      *
@@ -59,14 +57,14 @@ class TagService
 
         if (is_string($tags)) {
             return preg_split(
-                '#[' . preg_quote(config('taggable.delimiters'), '#') . ']#',
+                '#['.preg_quote(config('taggable.delimiters'), '#').']#',
                 $tags,
                 null,
                 PREG_SPLIT_NO_EMPTY
             );
         }
 
-        return (array)$tags;
+        return (array) $tags;
     }
 
     /**
@@ -87,7 +85,7 @@ class TagService
      * Build a delimited string from a model's tags.
      *
      * @param \Illuminate\Database\Eloquent\Model $model
-     * @param string $field
+     * @param string                              $field
      *
      * @return string
      */
@@ -114,7 +112,7 @@ class TagService
      * Build a simple array of a model's tags.
      *
      * @param \Illuminate\Database\Eloquent\Model $model
-     * @param string $field
+     * @param string                              $field
      *
      * @return array
      */
@@ -151,8 +149,8 @@ class TagService
             $class = get_class($class);
         }
 
-        $sql = 'SELECT DISTINCT t.*' .
-            ' FROM taggable_taggables tt LEFT JOIN taggable_tags t ON tt.tag_id=t.tag_id' .
+        $sql = 'SELECT DISTINCT t.*'.
+            ' FROM taggable_taggables tt LEFT JOIN taggable_tags t ON tt.tag_id=t.tag_id'.
             ' WHERE tt.taggable_type = ?';
 
         return Tag::hydrateRaw($sql, [$class]);

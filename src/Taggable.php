@@ -1,18 +1,16 @@
-<?php namespace Cviebrock\EloquentTaggable;
+<?php
+
+namespace Cviebrock\EloquentTaggable;
 
 use Cviebrock\EloquentTaggable\Models\Tag;
 use Cviebrock\EloquentTaggable\Services\TagService;
 use Illuminate\Database\Eloquent\Builder;
 
-
 /**
- * Class Taggable
- *
- * @package Cviebrock\EloquentTaggable
+ * Class Taggable.
  */
 trait Taggable
 {
-
     /**
      * Get a collection of all Tags a Model has.
      *
@@ -99,7 +97,7 @@ trait Taggable
     }
 
     /**
-     * Remove one tag from the model
+     * Remove one tag from the model.
      *
      * @param string $tagName
      */
@@ -158,7 +156,7 @@ trait Taggable
      * Scope for a Model that has all of the given tags.
      *
      * @param \Illuminate\Database\Eloquent\Builder $query
-     * @param array|string $tags
+     * @param array|string                          $tags
      *
      * @return \Illuminate\Database\Eloquent\Builder
      */
@@ -166,27 +164,23 @@ trait Taggable
     {
         $normalized = app(TagService::class)->buildTagArrayNormalized($tags);
         $className = $query->getModel()->getMorphClass();
+        $primaryKey = $this->getKeyName();
 
-        foreach($normalized as $tag) {
-            $primaryKey = $this->getKeyName();
-            $query->whereIn($this->getTable() . '.' . $primaryKey, function($query) use($className, $tag) {
-                $query->select('taggable_id')
-                    ->from('taggable_taggables')
-                    ->join('taggable_tags', 'taggable_taggables.tag_id', '=', 'taggable_tags.tag_id')
-                    ->where('taggable_type', $className)
-                    ->where('taggable_tags.normalized', $tag);
-            });
-        }
+        $query->join('taggable_taggables', 'taggable_taggables.taggable_id', '=', $this->getTable().'.'.$primaryKey)
+              ->join('taggable_tags', 'taggable_taggables.tag_id', '=', 'taggable_tags.tag_id')
+              ->where('taggable_taggables.taggable_type', $className)
+              ->whereIn('taggable_tags.normalized', $normalized)
+              ->groupBy($this->getTable().'.'.$primaryKey)
+              ->havingRaw('COUNT('.$this->getTable().'.'.$primaryKey.') = '.count($normalized));
 
         return $query;
-
     }
 
     /**
      * Scope for a Model that has any of the given tags.
      *
      * @param \Illuminate\Database\Eloquent\Builder $query
-     * @param array $tags
+     * @param array                                 $tags
      *
      * @return \Illuminate\Database\Eloquent\Builder
      */
@@ -201,7 +195,7 @@ trait Taggable
         $className = $query->getModel()->getMorphClass();
 
         $primaryKey = $this->getKeyName();
-        $query->whereIn($this->getTable() . '.' . $primaryKey, function($query) use ($className, $normalized) {
+        $query->whereIn($this->getTable().'.'.$primaryKey, function ($query) use ($className, $normalized) {
             $query->select('taggable_id')
                 ->from('taggable_taggables')
                 ->join('taggable_tags', 'taggable_taggables.tag_id', '=', 'taggable_tags.tag_id')
@@ -213,20 +207,21 @@ trait Taggable
     }
 
     /**
-     * Scope for a Model that doesn't have any of the given Tags
+     * Scope for a Model that doesn't have any of the given Tags.
      *
      * @param \Illuminate\Database\Eloquent\Builder $query
-     * @param array $tags
+     * @param array                                 $tags
      *
      * @return \Illuminate\Database\Eloquent\Builder
      */
-    public function scopeWithoutAnyTags(Builder $query, $tags = []) {
+    public function scopeWithoutAnyTags(Builder $query, $tags = [])
+    {
         $normalized = app(TagService::class)->buildTagArrayNormalized($tags);
         $className = $query->getModel()->getMorphClass();
 
-        foreach($normalized as $tag) {
+        foreach ($normalized as $tag) {
             $primaryKey = $this->getKeyName();
-            $query->whereNotIn($this->getTable() . '.' . $primaryKey, function($query) use($className, $tag) {
+            $query->whereNotIn($this->getTable().'.'.$primaryKey, function ($query) use ($className, $tag) {
                 $query->select('taggable_id')
                     ->from('taggable_taggables')
                     ->join('taggable_tags', 'taggable_taggables.tag_id', '=', 'taggable_tags.tag_id')
