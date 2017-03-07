@@ -242,11 +242,12 @@ trait Taggable
         $className = $query->getModel()->getMorphClass();
         $primaryKey = $this->getKeyName();
         $pdo = \DB::connection()->getPdo();
+        $normalized = array_map($pdo->quote, $normalized);
 
         $query->join('taggable_taggables', 'taggable_taggables.taggable_id', '=', $this->getTable().'.'.$primaryKey)
               ->join('taggable_tags', 'taggable_taggables.tag_id', '=', 'taggable_tags.tag_id')
               ->where('taggable_taggables.taggable_type', $className)
-              ->whereRaw('taggable_tags.normalized REGEXP "' . join('|', $pdo->quote($normalized)) . '"')
+              ->whereRaw('taggable_tags.normalized REGEXP "' . join('|', $normalized) . '"')
               ->groupBy($this->getTable().'.'.$primaryKey)
               ->orderByRaw('COUNT('.$this->getTable().'.'.$primaryKey.') DESC');
 
