@@ -242,7 +242,7 @@ trait Taggable
         $className = $query->getModel()->getMorphClass();
         $primaryKey = $this->getKeyName();
         $pdo = \DB::connection()->getPdo();
-        $normalized = array_map($pdo->quote, $normalized);
+        $normalized = array_map([$pdo, 'quote'], $normalized);
 
         $query->join('taggable_taggables', 'taggable_taggables.taggable_id', '=', $this->getTable().'.'.$primaryKey)
               ->join('taggable_tags', 'taggable_taggables.tag_id', '=', 'taggable_tags.tag_id')
