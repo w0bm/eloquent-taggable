@@ -225,6 +225,33 @@ trait Taggable
 
         return $query;
     }
+    
+    /**
+     * Scopes for a Model that has any of the given tags in a relaxed way.
+     *
+     * For example: tag `foo` will also match `foobar`
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param array                                 $tags
+     *
+     * @return \Illuminate\Database\Elowuent\Builder
+     */
+    public function scopeWithAnyTagsFuzzy(Builder $query, $tags = [])
+    {
+        $normalized = app(TagService::class)->buildTagArrayNormalized($tags);
+        $className = $query->getModel()->getMorphClass();
+        $primaryKey = $this->getKeyName();
+        $pdo = \DB::connection()->getPdo();
+
+        $query->join('taggable_taggables', 'taggable_taggables.taggable_id', '=', $this->getTable().'.'.$primaryKey)
+              ->join('taggable_tags', 'taggable_taggables.tag_id', '=', 'taggable_tags.tag_id')
+              ->where('taggable_taggables.taggable_type', $className)
+              ->whereRaw('taggable_tags.normalized REGEXP "' . join('|', $pdo->quote($normalized)) . '"')
+              ->groupBy($this->getTable().'.'.$primaryKey)
+              ->orderByRaw('COUNT('.$this->getTable().'.'.$primaryKey.') DESC');
+
+        return $query;
+    }
 
     /**
      * Scope for a Model that doesn't have any tags.
