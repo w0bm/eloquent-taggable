@@ -234,7 +234,7 @@ trait Taggable
      * @param \Illuminate\Database\Eloquent\Builder $query
      * @param array                                 $tags
      *
-     * @return \Illuminate\Database\Elowuent\Builder
+     * @return \Illuminate\Database\Eloquent\Builder
      */
     public function scopeWithAnyTagsFuzzy(Builder $query, $tags = [])
     {
