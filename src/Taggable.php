@@ -225,6 +225,22 @@ trait Taggable
 
         return $query;
     }
+
+    /**
+     * Counts scoped queries. This is basically a hack to go around
+     * GROUP BY counting.
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     *
+     * @return int
+     */
+    public function scopeCountScoped(Builder $query)
+    {
+        $query = $query->selectRaw(1);
+        return \DB::table(\DB::raw("({$query->toSql()}) as sub"))
+            ->mergeBindings($query->getQuery())
+            ->count();
+    }
     
     /**
      * Scopes for a Model that has any of the given tags in a relaxed way.
