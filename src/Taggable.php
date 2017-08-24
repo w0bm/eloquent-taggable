@@ -238,8 +238,7 @@ trait Taggable
     {
         $query = $query->selectRaw(1);
         return \DB::table(\DB::raw("({$query->toSql()}) as sub"))
-            ->mergeBindings($query->getQuery())
-            ->count();
+            ->mergeBindings($query->getQuery());
     }
     
     /**
